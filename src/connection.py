@@ -2,24 +2,30 @@
 # Para criar um ambiente virtual usando o: python -m venv 
 
 #importar as bibliotecas de conecção
-import mysql.connector
+import mysql
+import mysql.connector as mysql
+from mysql.connector import Error
+from os import getenv
+from dotenv import load_dotenv
 
-# Conectar ao server
-db = mysql.connector.connect(
-    host="mysql.shardatabases.app",
+load_dotenv()
+
+print("O codigo iniciou")
+
+try:
+    #objeto de conexão
+    conn = mysql.connect(
+    host=getenv("host"),
+    user=getenv("user"),
+    password=getenv("passoword"),
     port=3306,
-    user="4a17d1e1fbce429a854799ccb20d674c",
-    password="testeteste")
+    database=getenv("database")
+    )
 
-# Pegar o controle
-cur = db.cursor()
-
-# Execute a query
-cur.execute("SELECT CURDATE()")
-
-# Pegar um resultado
-row = cur.fetchone()
-print("Current date is: {0}".format(row[0]))
-
-# Encerar a conecção 
-db.close()
+    if conn.is_connected():
+        print("ok")
+    else:
+        print("erro")
+        
+except mysql.Error as e:
+    print(e)
