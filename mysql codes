@@ -1,0 +1,14 @@
+Para gerenciar dados
+
+SELECT * FROM nome_da_tabela;: Seleciona todas as colunas e linhas de uma tabela. 
+SELECT nome_da_coluna1, nome_da_coluna2 FROM nome_da_tabela;: Seleciona colunas específicas. 
+INSERT INTO nome_da_tabela (campo1, campo2) VALUES (valor1, valor2);: Insere novos dados em uma tabela. 
+UPDATE nome_da_tabela SET campo1 = valor1 WHERE condicao;: Atualiza dados existentes em uma tabela. 
+DELETE FROM nome_da_tabela WHERE condicao;: Exclui dados de uma tabela. 
+FETCH 
+
+Para gerenciar o banco de dados
+
+CREATE TABLE nome_da_tabela (campo1 tipo_dado, campo2 tipo_dado);: Cria uma nova tabela. 
+CREATE DATABASE nome_do_banco;: Cria um novo banco de dados. 
+DROP DATABASE nome_do_banco;: Exclui um banco de dados inteiro. 

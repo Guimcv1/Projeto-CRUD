@@ -12,7 +12,8 @@ def criar_usuario(nome, email, senha):
                        (nome, email, senha)
         )
         conn.commit()
-        print('Usuario cadastrado com sucesso!') 
+        print('Usuario cadastrado com sucesso!') 0
+        
     except Exception as e:
             print(f'Falha ap criar uma tabela: {e}')
 def listar_usuario():
@@ -49,7 +50,6 @@ def criar_tabela():
     try:
           conn = get_connect()
           cursor = conn.cursor()
-
           cursor.execute('''
           CREATE TABLE TB_Usuario(
             ID INTEGER PRIMARY KEY,
