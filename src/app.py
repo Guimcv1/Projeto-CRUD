@@ -1,15 +1,17 @@
 from conexão_banco import conn, cursor
-from passlib.hash import django_bcrypt_sha256 as sha256
+from passlib.hash import pbkdf2_sha256 as sha256
 import time
+import pwinput
+
 
 def criar_tabela_prod():
     try:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS TB_Produtos(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                nome VARCHAR(255) NOT NULL,
                 quantidade INTEGER NOT NULL,
-                validade TEXT,
+                validade REAL,
                 preco REAL NOT NULL
             );
         ''')
@@ -22,9 +24,9 @@ def criar_tabela_pes():
     try:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS TB_Usuarios(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario TEXT NOT NULL UNIQUE,
-                senha TEXT NOT NULL
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                usuario VARCHAR(120) NOT NULL UNIQUE,
+                senha VARCHAR(255) NOT NULL
             );
         ''')
         conn.commit()
@@ -34,10 +36,10 @@ def criar_tabela_pes():
 
 def cadastrar_usuario():
     usuario = input("Digite o nome do usuário: ")
-    senha = input("Digite a senha: ")
+    senha = pwinput.pwinput(prompt="Digite a senha: ")
     senha_hash = sha256.hash(senha)
     try:
-        cursor.execute("INSERT INTO TB_Usuarios (usuario, senha) VALUES (?, ?)", (usuario, senha_hash))
+        cursor.execute("INSERT INTO TB_Usuarios (usuario, senha) VALUES (%s, %s)", (usuario, senha_hash))
         conn.commit()
         print(f"Usuário {usuario} cadastrado com sucesso!")
     except Exception as e:
@@ -47,9 +49,9 @@ def login():
     while True:
         print("\n" + 20*"-", "Login no sistema", 20*"-")
         user = input("Usuário: ")
-        senha = input("Senha: ")
-
-        cursor.execute("SELECT senha FROM TB_Usuarios WHERE usuario = ?", (user,))
+        senha = pwinput.pwinput("Senha: ")
+        sql = "SELECT senha FROM TB_Usuarios WHERE usuario = %s"
+        cursor.execute(sql,(user,))
         result = cursor.fetchone()
 
         if result and sha256.verify(senha, result[0]):
@@ -65,7 +67,7 @@ def cadastro_produto():
     validade = input("Digite a validade: ")
     quantidade = int(input("Digite a quantidade: "))
     preco = float(input("Digite o preço: R$"))
-    sql = "INSERT INTO TB_Produtos (nome, validade, quantidade, preco) VALUES (?, ?, ?, ?)"
+    sql = "INSERT INTO TB_Produtos (nome, validade, quantidade, preco) VALUES (%s, %s, %s, %s)"
     cursor.execute(sql, (nome, validade, quantidade, preco))
     conn.commit()
     print(f"Produto '{nome}' cadastrado com sucesso!")
@@ -107,7 +109,7 @@ def editar_produto():
         print("Opção inválida.")
         return
 
-    cursor.execute(f"UPDATE TB_Produtos SET {campo} = ? WHERE id = ?", (novo, produto_id))
+    cursor.execute("UPDATE TB_Produtos SET {campo} = %s WHERE id = %s", (novo, produto_id))
     conn.commit()
     print("Produto atualizado com sucesso!")
 
@@ -116,7 +118,7 @@ def vender_produto():
     produto_id = int(input("\nDigite o ID do produto a ser vendido: "))
     qtd_venda = int(input("Quantidade a vender: "))
 
-    cursor.execute("SELECT quantidade, nome FROM TB_Produtos WHERE id = ?", (produto_id,))
+    cursor.execute("SELECT quantidade, nome FROM TB_Produtos WHERE id = %s", (produto_id,))
     result = cursor.fetchone()
 
     if not result:
@@ -129,9 +131,31 @@ def vender_produto():
         print(f"Quantidade insuficiente. Estoque atual: {qtd_atual}")
     else:
         nova_qtd = qtd_atual - qtd_venda
-        cursor.execute("UPDATE TB_Produtos SET quantidade = ? WHERE id = ?", (nova_qtd, produto_id))
+        cursor.execute("UPDATE TB_Produtos SET quantidade = %s WHERE id = %s", (nova_qtd, produto_id))
         conn.commit()
         print(f"Venda realizada! {nome} agora tem {nova_qtd} unidades em estoque.")
+
+def deletar_produto():
+    listar_produtos()
+    produto_id = int(input("\nDigite o ID do produto que deseja deletar: "))
+
+    cursor.execute("SELECT nome FROM TB_Produtos WHERE id = %s", (produto_id,))
+    result = cursor.fetchone()
+
+    if not result:
+        print("Produto não encontrado.")
+        return
+
+    nome = result[0]
+    confirm = input(f"Tem certeza que deseja deletar o produto '{nome}'? (s/n): ").lower()
+
+    if confirm == "s":
+        cursor.execute("DELETE FROM TB_Produtos WHERE id = %s", (produto_id,))
+        conn.commit()
+        print(f"Produto '{nome}' deletado com sucesso!")
+    else:
+        print("Operação cancelada.")
+
 
 def interface():
     while True:
@@ -143,7 +167,8 @@ def interface():
         print("5 | Listar Produtos")
         print("6 | Editar Produto")
         print("7 | Vender Produto")
-        print("8 | Sair")
+        print("8 | Excluir Produto")
+        print("9 | Sair")
         op = input("Escolha uma opção: ")
 
         match op:
@@ -162,6 +187,8 @@ def interface():
             case "7":
                 vender_produto()
             case "8":
+                deletar_produto()
+            case "9":
                 print("Saindo...")
                 break
             case _:

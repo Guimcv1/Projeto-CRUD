@@ -11,4 +11,3 @@ config = {
 # Conectando ao banco
 conn = mysql.connector.connect(**config)
 cursor = conn.cursor()
-
